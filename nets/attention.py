@@ -8,18 +8,24 @@ expand_dims = lambda x: tf.expand_dims(tf.expand_dims(x, 1), 1)
 squeeze = lambda x: tf.squeeze(x, [1, 2])
 
 def self_attention(features, images, num_heads):
+
   batch_size, h, w, img_channels = images.get_shape().as_list()
-  location_num = h * w
+
+  location_num = h * w ##Pixels of image
   hidden_size = img_channels // num_heads
 
   keys = tf.layers.dense(inputs=features, units=hidden_size, use_bias=False)
   values = tf.layers.dense(inputs=features, units=hidden_size, use_bias=False)
   queries = tf.layers.dense(inputs=features, units=hidden_size, use_bias=False)
 
+  ## Linearise the image pixels
   keys = tf.reshape(keys, [batch_size, location_num, hidden_size])
   values = tf.reshape(values, [batch_size, location_num, hidden_size])
   queries = tf.reshape(queries, [batch_size, location_num, hidden_size])
 
+  # Mislabelling of values and queries.
+  # Outer product of keys and values. Inner product of all combinations of 
+  # latent vectors across the pixel space
   att_matrix = tf.matmul(keys, values, transpose_b=True) / (hidden_size ** 0.5)
   att_matrix = tf.nn.softmax(att_matrix)
   att_matrix = slim.dropout(att_matrix, keep_prob=0.9, scope='Dropout_1b')
